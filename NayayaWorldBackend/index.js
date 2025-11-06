@@ -19,13 +19,41 @@ app.use(express.urlencoded({ extended: true }));
 // Cookie parser middleware
 app.use(cookieParser());
 
-// CORS middleware
+// CORS middleware - Multiple origins support
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174", // agar aur local ports use kar rahe ho
+  "https://nyaya-world-backend-v2.vercel.app", // agar frontend bhi deploy karna ho
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your frontend URL
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Handle OPTIONS requests explicitly
+app.options("*", cors());
+
+// CORS middleware
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173" || "*", // Your frontend URL
+//     credentials: true,
+//   })
+// );
 
 // Routes
 app.use("/api/auth", require("./routes/auth.route.js"));
